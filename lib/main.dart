@@ -1,155 +1,164 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'firebase_options.dart';
 
-Future main() async {
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'flutter_flow/flutter_flow_theme.dart';
+import 'flutter_flow/flutter_flow_util.dart';
+import 'flutter_flow/internationalization.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'flutter_flow/nav/nav.dart';
+import 'index.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
-  runApp(const MyApp());
+  await FlutterFlowTheme.initialize();
+
+  runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+
+  static _MyAppState of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>()!;
+}
+
+class _MyAppState extends State<MyApp> {
+  Locale? _locale;
+  ThemeMode _themeMode = FlutterFlowTheme.themeMode;
+
+  late AppStateNotifier _appStateNotifier;
+  late GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _appStateNotifier = AppStateNotifier();
+    _router = createRouter(_appStateNotifier);
+  }
+
+  void setLocale(String language) {
+    setState(() => _locale = createLocale(language));
+  }
+
+  void setThemeMode(ThemeMode mode) => setState(() {
+        _themeMode = mode;
+        FlutterFlowTheme.saveThemeMode(mode);
+      });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+    return MaterialApp.router(
+      title: 'Dulceria DIANA',
+      localizationsDelegates: [
+        FFLocalizationsDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      locale: _locale,
+      supportedLocales: const [Locale('en', '')],
+      theme: ThemeData(brightness: Brightness.light),
+      darkTheme: ThemeData(brightness: Brightness.dark),
+      themeMode: _themeMode,
+      routeInformationParser: _router.routeInformationParser,
+      routerDelegate: _router.routerDelegate,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class NavBarPage extends StatefulWidget {
+  NavBarPage({Key? key, this.initialPage, this.page}) : super(key: key);
 
-  final String title;
+  final String? initialPage;
+  final Widget? page;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _NavBarPageState createState() => _NavBarPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final controller1=TextEditingController();
-  final controller2=TextEditingController();
-  final controller3=TextEditingController();
+/// This is the private State class that goes with NavBarPage.
+class _NavBarPageState extends State<NavBarPage> {
+  String _currentPageName = 'HomePage';
+  late Widget? _currentPage;
 
-  Future registar() async
-  {
-    final docUser= FirebaseFirestore.instance.collection('users').doc();
-    final json={
-      'nombre':controller1.text,
-      'edad':controller2.text,
-      'correo':controller3.text
-    };
-    await docUser.set(json);
+  @override
+  void initState() {
+    super.initState();
+    _currentPageName = widget.initialPage ?? _currentPageName;
+    _currentPage = widget.page;
   }
 
   @override
   Widget build(BuildContext context) {
+    final tabs = {
+      'HomePage': HomePageWidget(),
+      'AcercaDe': AcercaDeWidget(),
+      'Productos': ProductosWidget(),
+      'Carrito': CarritoWidget(),
+      'Sesion': SesionWidget(),
+    };
+    final currentIndex = tabs.keys.toList().indexOf(_currentPageName);
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title),),
-      body: ListView(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(10.0),
-            child: Row(
-              children: [
-                Text('Nombre '),
-                Container(
-                  height: 50,
-                  width: 200,
-                  child: TextField(
-                    controller: controller1,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Nombre del usuario',
-                    ),
-                  ),
-                ),
-              ],
+      body: _currentPage ?? tabs[_currentPageName],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (i) => setState(() {
+          _currentPage = null;
+          _currentPageName = tabs.keys.toList()[i];
+        }),
+        backgroundColor: Color(0xFFFFF930),
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Color(0x8A000000),
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.home_outlined,
+              size: 24.0,
             ),
+            label: 'Inicio',
+            tooltip: '',
           ),
-          Padding(
-            padding: EdgeInsets.all(10.0),
-            child: Row(
-              children: [
-                Text('Edad '),
-                Container(
-                  height: 50,
-                  width: 200,
-                  child: TextField(
-                    controller: controller2,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Edad del usuario',
-                    ),
-                  ),
-                ),
-              ],
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.announcement_outlined,
+              size: 24.0,
             ),
+            label: 'Acerca de',
+            tooltip: '',
           ),
-          Padding(
-            padding: EdgeInsets.all(10.0),
-            child: Row(
-              children: [
-                Text('Correo '),
-                Container(
-                  height: 50,
-                  width: 200,
-                  child: TextField(
-                    controller: controller3,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: 'Correo del usuario',
-                    ),
-                  ),
-                ),
-              ],
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.fastfood,
+              size: 24.0,
             ),
+            label: 'Productos',
+            tooltip: '',
           ),
-          Container(
-            height: 900,
-            child: StreamBuilder(
-              stream: FirebaseFirestore.instance.collection('users').snapshots(),
-              builder: (context,snapshot) {
-                if(!snapshot.hasData) {
-                  return Text('No hay información');
-                }
-                else {
-                  var items = snapshot.data?.docs;
-                  return ListView.builder(
-                    itemCount: snapshot.data?.docs.length,
-                    itemBuilder: (context, index) {
-                      DocumentSnapshot ds = snapshot.data
-                          ?.docs[index] as DocumentSnapshot<Object?>;
-                      return ElevatedButton(
-                          onPressed: (){
-                            FirebaseFirestore.instance.collection('users').doc(ds.id).delete();
-                          },
-                          child: Text(ds["nombre"]+' '+ds["correo"]+" "+ds["edad"]+" "+ds.id));
-                    },
-                  );
-                }
-              },
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.shopping_cart,
+              size: 24.0,
             ),
+            label: 'Carrito',
+            tooltip: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.person,
+              size: 24.0,
+            ),
+            label: 'Sesión',
+            tooltip: '',
           )
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (){
-          registar();
-        },
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
